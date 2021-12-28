@@ -47,7 +47,6 @@ class Future(object):
         # remove from future_cache
         future_cache = self._future_cache_ref()
         if future_cache is not None:
-            print("future cache: ", future_cache)
             del future_cache[self._id]
 
         # [(request_id, output), ...] sorted by request_id
