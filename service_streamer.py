@@ -31,7 +31,7 @@ class Future(object):
         self._future_cache_ref = future_cache_ref
         self._outputs = []
         # self._finish_event = threading.Event()
-        self._finish_event = ThreadSafeEvent(loop=loop)
+        self._finish_event = ThreadSafeEvent()
 
 
     async def result(self):
@@ -258,16 +258,18 @@ class PredictWorker(object):
     def _run_once(self):
         batch = []
         start_time = time.time()
+        timeout = self._max_latency
         for i in range(self._batch_size):
             try:
-                item = self._recv_request(timeout=self._max_latency)
+                item = self._recv_request(timeout=timeout)
             except TimeoutError:
                 # each item timeout exceed the max latency
                 break
             else:
                 batch.append(item)
-            if (time.time() - start_time) > self._max_latency:
-                # total batch time exceeds the max latency
+
+            timeout -= time.time() - start_time
+            if timeout < 0:
                 break
         if not batch:
             return 0
